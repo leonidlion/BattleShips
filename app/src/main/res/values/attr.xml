@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="GameBoard">
+        <attr name="board_line_width" format="integer"/>
+        <attr name="board_line_color" format="color"/>
+        <attr name="ship_cell_color" format="color"/>
+        <attr name="text_color" format="color"/>
+        <attr name="cell_color" format="color"/>
+        <attr name="text_size" format="dimension"/>
+    </declare-styleable>
+</resources>
