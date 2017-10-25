@@ -1,6 +1,8 @@
 package com.anull.dev.leo.battleships.ship;
 
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import com.anull.dev.leo.battleships.field.CellTypes;
@@ -9,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Ship {
+public class Ship implements Parcelable {
     private boolean isShipAlive = true;
     private List<ShipCellInfo> mShipCells;
     private int mShipSize;
@@ -89,4 +91,36 @@ public class Ship {
         return mDamagedCellsCount;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeByte(this.isShipAlive ? (byte) 1 : (byte) 0);
+        dest.writeList(this.mShipCells);
+        dest.writeInt(this.mShipSize);
+        dest.writeInt(this.mDamagedCellsCount);
+    }
+
+    protected Ship(Parcel in) {
+        this.isShipAlive = in.readByte() != 0;
+        this.mShipCells = new ArrayList<ShipCellInfo>();
+        in.readList(this.mShipCells, ShipCellInfo.class.getClassLoader());
+        this.mShipSize = in.readInt();
+        this.mDamagedCellsCount = in.readInt();
+    }
+
+    public static final Parcelable.Creator<Ship> CREATOR = new Parcelable.Creator<Ship>() {
+        @Override
+        public Ship createFromParcel(Parcel source) {
+            return new Ship(source);
+        }
+
+        @Override
+        public Ship[] newArray(int size) {
+            return new Ship[size];
+        }
+    };
 }
