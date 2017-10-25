@@ -1,17 +1,22 @@
-package com.anull.dev.leo.battleships;
+package com.anull.dev.leo.battleships.field;
 
 
-import android.util.Log;
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import com.anull.dev.leo.battleships.Constants;
+import com.anull.dev.leo.battleships.Utils;
+import com.anull.dev.leo.battleships.ship.Ship;
+import com.anull.dev.leo.battleships.ship.ShipSizes;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class GameField {
-    private static final int EMPTY = 0;
-    private static final int SHIP = 1;
-    private static final int NEAR_SHIP_CELL = 2;
+import static com.anull.dev.leo.battleships.field.CellTypes.*;
+import static com.anull.dev.leo.battleships.ship.ShipSizes.*;
 
+public class GameField implements Parcelable {
     private static final int UP = 0;
     private static final int LEFT = 1;
     private static final int RIGHT = 2;
@@ -20,32 +25,36 @@ public class GameField {
     private static final int MAX_INDEX = 9;
     private static final int MIN_INDEX = 0;
 
-    private static final int FOUR_DECKER = 4;
-    private static final int THREE_DECKER = 3;
-    private static final int TWO_DECKER = 2;
-    private static final int ONE_DECKER = 1;
-
     private int[][] mCells;
     private int startI, startJ;
     private Random mRandom;
-    private int mCellColor;
-    private int mShipColor;
+    private List<Ship> mShips;
 
     public GameField(){
         mCells = new int[10][10];
         mRandom = new Random();
+        mShips = new ArrayList<>();
+        initCells();
+        generateShips();
     }
 
-    public void setColors(int cellColor, int shipColor){
-        mCellColor = cellColor;
-        mShipColor = shipColor;
+    private GameField(Parcel in) {
+        this.mCells = Utils.read2DimArray(in);
+        this.startI = in.readInt();
+        this.startJ = in.readInt();
+        this.mShips = new ArrayList<>();
+        in.readList(this.mShips, Ship.class.getClassLoader());
     }
 
-    public void addCell(int i, int j){
-        mCells[i][j] = EMPTY;
+    private void initCells(){
+        for (int i = 0; i < mCells.length; i++){
+            for (int j = 0; j < mCells.length; j++){
+                mCells[i][j] = CellTypes.EMPTY;
+            }
+        }
     }
 
-    public void generateShips(){
+    private void generateShips(){
         buildShip(FOUR_DECKER);
         buildShip(THREE_DECKER);
         buildShip(THREE_DECKER);
@@ -58,19 +67,22 @@ public class GameField {
         buildShip(ONE_DECKER);
     }
 
-    private void buildShip(int shipDecade){
+    private void buildShip(int shipSize){
         generateStartPosition();
 
-        if (shipDecade != ONE_DECKER) {
-            List<Integer> possibleDirections = generatePossibleDirection(shipDecade);
+        if (shipSize != ShipSizes.ONE_DECKER) {
+            List<Integer> possibleDirections = generatePossibleDirection(shipSize);
             if (possibleDirections.isEmpty()) {
-                buildShip(shipDecade);
+                buildShip(shipSize);
             } else {
-                buildShipInDirection(shipDecade, possibleDirections);
+                buildShipInDirection(shipSize, possibleDirections);
             }
         }else {
-            checkNearCells(true, UP, shipDecade);
-            mCells[startI][startJ] = SHIP;
+            checkNearCells(true, UP, shipSize);
+            Ship ship = new Ship(shipSize);
+            ship.addCoordinate(startI, startJ);
+            mShips.add(ship);
+            mCells[startI][startJ] = CellTypes.SHIP;
         }
     }
 
@@ -88,25 +100,20 @@ public class GameField {
 
     private List<Integer> generatePossibleDirection(int shipDecker) {
         List<Integer> possibleDirections = new ArrayList<>();
-        Log.d(TAG, "I: " + startI + " J: " + startJ + " DECK: " + shipDecker);
 
         if ((startI - shipDecker) >= MIN_INDEX){
-            Log.d(TAG, "UP: " + (startI - shipDecker));
             if (checkNearCells(false, UP, shipDecker))
                 possibleDirections.add(UP);
         }
         if ((startI + shipDecker) <= MAX_INDEX){
-            Log.d(TAG, "DOWN: " + (startI + shipDecker));
             if (checkNearCells(false, DOWN, shipDecker))
                 possibleDirections.add(DOWN);
         }
         if ((startJ - shipDecker) >= MIN_INDEX){
-            Log.d(TAG, "LEFT: " + (startJ - shipDecker));
             if (checkNearCells(false, LEFT, shipDecker))
                 possibleDirections.add(LEFT);
         }
         if ((startJ + shipDecker) <= MAX_INDEX){
-            Log.d(TAG, "RIGHT: " + (startJ + shipDecker));
             if (checkNearCells(false, RIGHT, shipDecker))
                 possibleDirections.add(RIGHT);
         }
@@ -164,41 +171,107 @@ public class GameField {
         return true;
     }
 
-    private static final String TAG = "GameField";
     private void buildShipInDirection(int shipDecker, List<Integer> possibleDirections) {
         int randomDirection = possibleDirections.get(mRandom.nextInt(possibleDirections.size()));
         checkNearCells(true, randomDirection, shipDecker);
+        Ship currentShip = new Ship(shipDecker);
+
         switch (randomDirection){
             case DOWN:
                 for (int i = startI; i < (startI + shipDecker); i++){
-                    Log.d(TAG, "buildShipInDirection: I " + i);
                     mCells[i][startJ] = SHIP;
+                    currentShip.addCoordinate(i, startJ);
                 }
                 break;
             case UP:
                 for (int i = startI; i > (startI - shipDecker); i--){
-                    Log.d(TAG, "buildShipInDirection: I " + i);
                     mCells[i][startJ] = SHIP;
+                    currentShip.addCoordinate(i, startJ);
                 }
                 break;
             case LEFT:
                 for (int j = startJ; j > (startJ - shipDecker); j--){
-                    Log.d(TAG, "buildShipInDirection: J " + j);
                     mCells[startI][j] = SHIP;
+                    currentShip.addCoordinate(startI, j);
                 }
                 break;
             case RIGHT:
                 for (int j = startJ; j < (startJ + shipDecker); j++){
-                    Log.d(TAG, "buildShipInDirection: J " + j);
                     mCells[startI][j] = SHIP;
+                    currentShip.addCoordinate(startI, j);
                 }
                 break;
         }
+        mShips.add(currentShip);
     }
 
-    public int getCellColor(int i, int j){
-       if (mCells[i][j] == SHIP)
-           return mShipColor;
-        else return mCellColor;
-   }
+    public int getCellType(int i, int j){
+        if (mCells[i][j] == SHIP){
+            for (Ship x : mShips){
+                if(x.getCellStatus(i,j) != 0) {
+                    return x.getCellStatus(i, j);
+                }
+            }
+        } else {
+            return mCells[i][j];
+        }
+        return -1;
+    }
+
+    public void attack(int i, int j){
+        if (mCells[i][j] == SHIP){
+            for (Ship x : mShips){
+                if (x.tryAttackShip(i,j))
+                    return;
+            }
+        }
+    }
+
+    public GameCellInfo getCellInfo(int i, int j){
+        GameCellInfo info = new GameCellInfo(i,j);
+        switch (mCells[i][j]){
+            case SHIP:
+                info.setCellType(Constants.SHIP_CELL_CLICK);
+                for (Ship x : mShips) {
+                    if (x.isCurrentShipInCell(i, j)) {
+                        info.setI(i);
+                        info.setJ(j);
+                        info.setShip(x);
+                        return info;
+                    }
+                }
+            case EMPTY:
+                info.setCellType(Constants.EMPTY_CELL_CLICK);
+                return info;
+            case NEAR_SHIP_CELL:
+                info.setCellType(Constants.NEAR_SHIP_CELL_CLICK);
+                return info;
+            default: return info;
+        }
+    }
+
+    public static final Parcelable.Creator<GameField> CREATOR = new Parcelable.Creator<GameField>() {
+        @Override
+        public GameField createFromParcel(Parcel source) {
+            return new GameField(source);
+        }
+
+        @Override
+        public GameField[] newArray(int size) {
+            return new GameField[size];
+        }
+    };
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        Utils.write2DimArray(mCells, dest);
+        dest.writeInt(this.startI);
+        dest.writeInt(this.startJ);
+        dest.writeList(this.mShips);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 }

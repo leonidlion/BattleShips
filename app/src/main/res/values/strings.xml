@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">BattleShips</string>
+    <string name="ship_name">Ship name: %1$s</string>
+    <string name="ship_size">Ship size: %1$d</string>
+    <string name="ship_health">Ship health: %1$d / %2$d</string>
+    <string name="current_cell_coordinate">I: %1$d J: %2$d</string>
+    <string name="empty_data">Empty</string>
+    <string name="attack_ship">Attack ship</string>
+    <string name="reload_field">Reload Field</string>
+    <string name="set_color_cell">Set cell color</string>
+    <string name="set_color_ship">Set ship color</string>
+    <string name="set_color_line">Set line color</string>
+    <string name="set_color_dead">Set dead color</string>
+    <string name="set_color_text">Set text color</string>
+    <string name="is_ship_alive">Ship alive: %1$s</string>
+
 </resources>
