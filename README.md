@@ -1,5 +1,11 @@
 # BattleShips
 Test task
+### 25.10.17
+UPDATE
+- save game board state after rotate device
+- show information about current cell and ship in there
+- add attack mode
+- change project structure
 
 ### Example of use
 ```
